@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🎸 Live Song Poll</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    h1 {
+      color: #ff3c3c;
+      text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 0 0 10px #ff3c3c;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 40px;
+    }
+    button {
+      background: #ff3c3c;
+      border: none;
+      padding: 15px 25px;
+      font-size: 16px;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      box-shadow: 0 2px 5px rgba(255, 60, 60, 0.5);
+      flex: 1;
+      margin: 0 8px;
+    }
+    button:hover {
+      background: #e03232;
+      box-shadow: 0 4px 12px rgba(255, 60, 60, 0.8);
+    }
+    h2 {
+      border-bottom: 2px solid #ff3c3c;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+    #totalVotes {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.1em;
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+    ul#results {
+      list-style: none;
+      padding: 0;
+    }
+    ul#results li {
+      margin-bottom: 18px;
+    }
+    .song-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    .bar-container {
+      background: #333;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 24px;
+      width: 100%;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .bar {
+      height: 100%;
+      background: #ff3c3c;
+      width: 0%;
+      text-align: right;
+      padding-right: 8px;
+      line-height: 24px;
+      color: white;
+      font-weight: 600;
+      border-radius: 10px 0 0 10px;
+      transition: width 0.5s ease;
+      box-shadow: 0 0 10px #ff3c3c;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎸 Vote for the next song!</h1>
+  <div class="buttons">
+    <button onclick="vote('Toxicity')">Toxicity</button>
+    <button onclick="vote('American Idiot')">American Idiot</button>
+    <button onclick="vote('Smells Like Teen Spirit')">Teen Spirit</button>
+  </div>
+
+  <h2>Live Results</h2>
+  <div id="totalVotes">Total Votes: 0</div>
+  <ul id="results"></ul>
+
+  <script>
+    const socket = io();
+
+    function vote(song) {
+      socket.emit('vote', song);
+    }
+
+    socket.on('update', data => {
+      const results = document.getElementById('results');
+      const totalVotes = Object.values(data).reduce((a,b) => a + b, 0);
+      document.getElementById('totalVotes').textContent = `Total Votes: ${totalVotes}`;
+
+      results.innerHTML = '';
+
+      for (const [song, count] of Object.entries(data)) {
+        // Calculate percent width (avoid division by zero)
+        const percent = totalVotes ? (count / totalVotes) * 100 : 0;
+
+        results.innerHTML += `
+          <li>
+            <div class="song-name">${song} — ${count} vote${count !== 1 ? 's' : ''}</div>
+            <div class="bar-container">
+              <div class="bar" style="width: ${percent}%"></div>
+            </div>
+          </li>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
